@@ -1,0 +1,188 @@
+<html>
+
+<head>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script
+        src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+</head>
+
+<body>
+    <a-scene obb-collider="showColliders: false">
+        <a-entity environment="preset: dream; fog:0"></a-entity>
+        <a-plane position="0 1 -10" width="10" height="20" rotation="-90 " color="grey"></a-plane>
+        <a-light type="ambient" color="white" position="0 0 0"></a-light>
+        
+        <a-camera id="player" obb-collider>
+
+            <a-text id="vidas" value="Vidas = 5" position="5 3 -4" color="red" scale="" visible="true"></a-text>
+            <a-text id="gameOver" value="Game Over" position="-3 2 -5" color="red" visible="false"
+                scale="5 5 5"></a-text>
+            <a-text id="score" value="Score = " position="-2 1 -5" color="red" visible="false" scale="3 3 3"></a-text>
+            <a-text id="puntosirl" value="Score = " position="5 2 -4" color="red" visible="true" scale=""></a-text>
+
+           <a-cursor></a-cursor>
+        </a-camera>
+    </a-scene>
+
+    <script>
+        // variables
+        var scene = document.querySelector("a-scene");
+        var player = document.getElementById("player");
+        var vidas = 5;
+        var vidasText = document.getElementById("vidas");
+        var gotext = document.getElementById("gameOver");
+        var score = document.getElementById("score");
+        var points = 0;
+        var puntosirl = document.getElementById("puntosirl");
+
+        var gameover = false;
+        var cajaSeleccionada = null;
+
+        // dificultad progresiva
+        var cajaInterval;
+        var cajaAmarillaInterval;
+        var generacionInterval = 2000;
+        var velocidadCaja = 4000;
+        var tiempoDifInterval = 5000; // cada 5 segundos se aumenta la dificultad
+
+        // llamar a la función para comenzar
+        generarCajas();
+        aumentarDificultad();
+
+        // generar las cajas
+        function generarCajas() {
+            cajaInterval = setInterval(crearCaja, generacionInterval);
+            cajaAmarillaInterval = setInterval(crearCajaAmarilla, 10000);
+        }
+
+        // aumentar la dificultad
+        function aumentarDificultad(){
+            setInterval(() => {
+                if(!gameover){
+                    generacionInterval = Math.max(500, generacionInterval - 200);
+                    velocidadCaja = Math.max(1000, velocidadCaja - 200);
+
+                    clearInterval(cajaInterval);
+                    cajaInterval = setInterval(crearCaja, generacionInterval);
+                }
+            }, tiempoDifInterval);
+        }
+
+        // crear cajas
+        function crearCaja() {
+            var caja = document.createElement("a-box");
+            caja.setAttribute("color", "green");
+            caja.setAttribute("scale", "0.3, 0.3, 0.3");
+            caja.setAttribute("position", `${Math.random() * 10 - 5} 1.5 -10`);
+            caja.setAttribute("obb-collider", "showColliders: true");
+            caja.setAttribute("animation", `property: position; to: 0 1.5 0; dur: ${velocidadCaja}; easing: linear;`);
+
+            caja.addEventListener("mouseenter", function () {
+                cajaSeleccionada = this;
+                this.setAttribute("color", "red");
+            });
+            caja.addEventListener("mouseleave", function () {
+                if (cajaSeleccionada !== this) {
+                    this.setAttribute("color", "green");
+                }
+            });
+            scene.appendChild(caja);
+        }
+
+        // crear powerups (esfera amarilla)
+        function crearCajaAmarilla() {
+            var cajaAmarilla = document.createElement("a-sphere");
+            cajaAmarilla.setAttribute("color", "yellow");
+            cajaAmarilla.setAttribute("scale", "0.3, 0.3, 0.3");
+            cajaAmarilla.setAttribute("position", `${Math.random() * 10 - 5} 1.5 -10`);
+            cajaAmarilla.setAttribute("obb-collider", "showColliders: true");
+            cajaAmarilla.setAttribute("animation", `property: position; to: 0 1.5 0; dur: 4000; easing: linear;`);
+
+            cajaAmarilla.addEventListener("mouseenter", function () {
+                cajaSeleccionada = this;
+                this.setAttribute("color", "orange");
+            });
+            cajaAmarilla.addEventListener("mouseleave", function () {
+                if (cajaSeleccionada !== this) {
+                    this.setAttribute("color", "yellow");
+                }
+            });
+            scene.appendChild(cajaAmarilla);
+        }
+
+        // eliminar las cajas con el espacio
+        document.addEventListener("keyup", function (event) {
+            if (event.code === "Space" && cajaSeleccionada) {
+                if (cajaSeleccionada.getAttribute("color") === "orange") {
+                    eliminarCajas();
+                } else {
+                    cajaSeleccionada.remove();
+                    sumarPuntos(); 
+                    
+                }cajaSeleccionada = null;
+            }
+        });
+
+        // método para eliminar todas las cajas
+        function eliminarCajas() {
+            var todasCajas = document.querySelectorAll("a-box, a-sphere");
+            todasCajas.forEach(function (caja) {
+                sumarPuntos();
+                caja.remove(); // eliminar todas las cajas
+            });
+        }
+
+        // método para eliminar todas las cajas AL FINAL
+        function eliminarCajasFinal() {
+            var todasCajas = document.querySelectorAll("a-box, a-sphere");
+            todasCajas.forEach(function (caja) {
+                caja.remove(); // eliminar todas las cajas
+            });
+        }
+
+        // perder vidas 
+        player.addEventListener("obbcollisionstarted", function (event) {
+            var vidasActuales = vidas;
+            if (vidasActuales > 0) {
+                vidas = vidasActuales - 1;
+                vidasText.setAttribute("value", "Vidas = " + vidas)
+                // GAMEOVER
+                if (vidasActuales - 1 === 0) {
+                    gotext.setAttribute("visible", "true");
+                    gameover = true;
+                    score.setAttribute("visible", "true");
+                    score.setAttribute("value", "Score = " + points);
+                    eliminarCajasFinal();
+                    clearInterval(cajaInterval);
+                    clearInterval(cajaAmarillaInterval);
+                }
+            }
+        });
+
+        //sumar puntos
+        function sumarPuntos() {
+            points++;
+            puntosirl.setAttribute("value", "Score = " + points);
+        }
+
+
+        // en clase
+        /* caja.addEventListener("mouseenter", function(event){
+            this.setAttribute("color", "red");
+        });
+        caja.addEventListener("mouseleave", function(event){
+            this.setAttribute("color", "green");
+        });
+        caja.addEventListener("click", function(event){
+            this.remove();
+        });
+        player.addEventListener("obbcollisionstarted", function(event){
+            vidas.setAttribute("value", vidas.getAttribute("value") - 1);
+        }); */
+
+
+
+    </script>
+</body>
+
+</html>

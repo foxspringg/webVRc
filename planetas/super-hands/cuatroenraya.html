@@ -1,0 +1,71 @@
+<head>
+  <title>Cuatro en Raya</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.misc.min.js"></script>
+  <script src="https://unpkg.com/super-hands@^3.0.3/dist/super-hands.min.js"></script>
+  <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/MozillaReality/ammo.js@8bbc0ea/builds/ammo.wasm.js"></script>
+  <script src="./aframe-physics-system.js"></script>
+  <script src="./force-pushable.js"></script>
+</head>
+
+<body>
+  <a-scene physics="debug: true; driver: ammo; gravity: -2;">
+    <a-entity environment="preset: dream; fog:0"></a-entity>
+    <a-assets></a-assets>
+    <a-entity>
+      <a-camera></a-camera>
+      <a-entity sphere-collider="objects: a-cylinder" super-hands hand-controls="hand: left"></a-entity>
+      <a-entity sphere-collider="objects: a-box" super-hands hand-controls="hand: right"></a-entity> 
+    </a-entity>
+    <!-- Mesa -->
+    <a-cylinder id="mesa" color="brown" scale="1 0.1 1" position="0 1.2 -1" rotation="0 0 0" ammo-body="type: static" ammo-shape="type: cylinder; cylinderAxis: y"
+      visible="true"></a-cylinder>
+      
+    <a-cylinder color="brown" scale="0.1 1.3 0.1" position="0 0.5 -1" rotation="0 0 0"></a-cylinder>
+
+    <!-- cuadrícula -->
+    <a-box color="blue" scale="1 1 0.05" position="0 1.7 -1" rotation="0 0 90"></a-box>
+
+    <!-- Moneda -->
+    <a-cylinder class="interactive"
+      hoverable
+      grabbable
+      stretchable
+      draggable
+      droppable
+      color="yellow"
+      position="-0.5 2 -0.7"
+      rotation="-90 0 0"
+      scale="0.1 0.01 0.1"
+      ammo-body="type: dynamic; activationState: active"
+      ammo-shape__main="type: cylinder; cylinderAxis: y"
+      ammo-shape__handle="type: cylinder;"></a-cylinder>
+
+    <script>
+      AFRAME.registerComponent('physics-grab-sync', {
+        init: function () {
+          const el = this.el;
+          
+          // Desactivar físicas al agarrar
+          el.addEventListener('grab-start', function () {
+            el.setAttribute('ammo-body', "type: static"); // Desactiva físicas
+          });
+
+          // Reactivar físicas al soltar
+          el.addEventListener('grab-end', function () {
+            
+            el.setAttribute('ammo-body', "type: dynamic");
+            // Reactiva físicas
+
+          });
+        }
+      });
+
+      // Agregar el componente a los objetos interactivos
+      document.querySelectorAll('.interactive').forEach(el => {
+        el.setAttribute('physics-grab-sync', '');
+      });
+    </script>
+  </a-scene>
+</body>
