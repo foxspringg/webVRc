@@ -6,7 +6,9 @@
 
 <body style="overflow: hidden; border: 0;">
     <a-scene embedded arjs>
-        <a-marker preset="hiro">
+        <!-- Para uno personalizado, subir el archivo .patt creado con lo del aula virtual a una carpeta
+         preset="custom" url="img/aa.patt" -->
+        <a-marker preset="barcode" value="0">
             <a-box position="0 0 0" rotation="0 0 0" color="red"></a-box>
         </a-marker>
         <a-entity camera></a-entity>
